@@ -41,6 +41,7 @@ if [ ! -d "$EPRINTS_ROOT/archives/$ARCHIVE_ID" ]; then
     cd '$EPRINTS_ROOT' && \
     printf '%s\n' \
       '$EPRINTS_HOSTNAME' \
+      '$ARCHIVE_ID' \
       '$EPRINTS_ADMIN_EMAIL' \
       '$DB_HOST' \
       '$DB_PORT' \
@@ -50,7 +51,8 @@ if [ ! -d "$EPRINTS_ROOT/archives/$ARCHIVE_ID" ]; then
       'n' \
       'y' \
       'y' \
-    | perl bin/epadmin create '$ARCHIVE_ID' '$REP_TYPE'
+      'y' \
+    | perl bin/epadmin create '$REP_TYPE'
   "
 
   su -s /bin/bash eprints -c "cd '$EPRINTS_ROOT' && perl bin/generate_apacheconf" || true

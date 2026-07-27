@@ -62,6 +62,13 @@ di `.env`).
 
 ## 5. Catatan penting
 
+- **User internal `eprints` (UID 1000).** EPrints menolak dijalankan
+  sebagai root — entrypoint otomatis membuat user `eprints` (UID/GID
+  1000 secara default) dan menjalankan semua perintah `epadmin` serta
+  worker Apache sebagai user tersebut. Kalau UID 1000 di host sudah
+  dipakai user lain dan menyebabkan konflik permission di bind mount
+  `/var/eprints`, override lewat env var `EPRINTS_UID` / `EPRINTS_GID`
+  di `.env`, lalu sesuaikan juga `chown` di langkah 2.
 - **Urutan prompt `epadmin create`** bisa sedikit berbeda antar versi
   EPrints. Jika proses pembuatan archive gagal di log
   (`docker compose logs -f eprints`), jalankan interaktif dulu untuk

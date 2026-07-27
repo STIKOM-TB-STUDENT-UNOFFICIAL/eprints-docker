@@ -21,6 +21,10 @@ echo "[entrypoint] Database eksternal terhubung."
 
 cd "$EPRINTS_ROOT"
 
+adduser eprints
+usermod -a -G eprints www-data
+usermod -a -G www-data eprints
+
 if [ ! -d "archives/$ARCHIVE_ID" ]; then
   echo "[entrypoint] Membuat archive '$ARCHIVE_ID' dengan DB eksternal..."
 

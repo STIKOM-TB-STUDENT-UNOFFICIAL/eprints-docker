@@ -71,11 +71,14 @@ if [ ! -d "$EPRINTS_ROOT/archives/$ARCHIVE_ID" ]; then
       'InnoDB' \
       'yes' \
       'no' \
-      'no' \
-      'yes' \
-      'yes' \
-      'yes' \
-    | perl bin/epadmin create '$REP_TYPE'
+    | perl bin/epadmin create '$REP_TYPE' || true
+
+    echo '[entrypoint] Melanjutkan pembuatan tabel database...'
+    perl bin/epadmin create_tables '$ARCHIVE_ID'
+    echo '[entrypoint] Mengimpor subjek standar...'
+    perl bin/import_subjects --verbose --force '$ARCHIVE_ID' || true
+    echo '[entrypoint] Membuat halaman statis...'
+    perl bin/generate_static --verbose '$ARCHIVE_ID' || true
   "
 
   su -s /bin/bash eprints -c "cd '$EPRINTS_ROOT' && perl bin/generate_apacheconf" || true

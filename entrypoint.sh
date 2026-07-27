@@ -3,6 +3,7 @@ set -e
 
 EPRINTS_ROOT=/opt/eprints3
 ARCHIVE_ID=${EPRINTS_ARCHIVE_ID:-repo}
+REP_TYPE=${EPRINTS_REP_TYPE:-pub}
 EPRINTS_UID=${EPRINTS_UID:-1000}
 EPRINTS_GID=${EPRINTS_GID:-1000}
 
@@ -39,6 +40,7 @@ if [ ! -d "$EPRINTS_ROOT/archives/$ARCHIVE_ID" ]; then
   su -s /bin/bash eprints -c "
     cd '$EPRINTS_ROOT' && \
     printf '%s\n' \
+      '$ARCHIVE_ID' \
       '$EPRINTS_HOSTNAME' \
       '$EPRINTS_ADMIN_EMAIL' \
       '$DB_HOST' \
@@ -47,7 +49,7 @@ if [ ! -d "$EPRINTS_ROOT/archives/$ARCHIVE_ID" ]; then
       '$DB_USER' \
       '$DB_PASS' \
       'n' \
-    | perl bin/epadmin create '$ARCHIVE_ID'
+    | perl bin/epadmin create '$REP_TYPE'
   "
 
   su -s /bin/bash eprints -c "cd '$EPRINTS_ROOT' && perl bin/generate_apacheconf" || true

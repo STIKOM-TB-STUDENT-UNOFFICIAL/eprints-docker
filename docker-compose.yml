@@ -7,7 +7,8 @@ services:
     ports:
       - "${EPRINTS_HOST_PORT:-8080}:80"
     environment:
-      EPRINTS_ARCHIVE_ID: repo
+      EPRINTS_ARCHIVE_ID: ${EPRINTS_ARCHIVE_ID:-repo}
+      EPRINTS_REP_TYPE: ${EPRINTS_REP_TYPE:-pub}
       EPRINTS_HOSTNAME: ${EPRINTS_HOSTNAME:-repo.example.com}
       EPRINTS_ADMIN_EMAIL: ${EPRINTS_ADMIN_EMAIL:-admin@example.com}
       DB_HOST: ${DB_HOST}

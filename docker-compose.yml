@@ -18,3 +18,13 @@ services:
     volumes:
       - /var/eprints:/opt/eprints3/archives
     restart: unless-stopped
+    networks:
+      - eprints-network
+
+networks:
+  eprints-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.243.0/16
+          gateway: 10.10.243.1

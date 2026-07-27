@@ -18,3 +18,4 @@ services:
     volumes:
       - /var/eprints:/opt/eprints3/archives
     restart: unless-stopped
+    networks: bridge

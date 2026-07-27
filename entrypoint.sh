@@ -50,18 +50,31 @@ if [ ! -d "$EPRINTS_ROOT/archives/$ARCHIVE_ID" ]; then
   su -s /bin/bash eprints -c "
     cd '$EPRINTS_ROOT' && \
     printf '%s\n' \
-      '$CLEAN_HOSTNAME' \
       '$ARCHIVE_ID' \
+      'yes' \
+      '$CLEAN_HOSTNAME' \
+      '80' \
+      '#' \
+      '/' \
+      '' \
       '$EPRINTS_ADMIN_EMAIL' \
+      '$CLEAN_HOSTNAME' \
+      '$CLEAN_HOSTNAME' \
+      'yes' \
+      'yes' \
+      '$DB_NAME' \
       '$DB_HOST' \
       '$DB_PORT' \
-      '$DB_NAME' \
+      '#' \
       '$DB_USER' \
       '$DB_PASS' \
-      'n' \
-      'y' \
-      'y' \
-      'y' \
+      'InnoDB' \
+      'yes' \
+      'no' \
+      'no' \
+      'yes' \
+      'yes' \
+      'yes' \
     | perl bin/epadmin create '$REP_TYPE'
   "
 

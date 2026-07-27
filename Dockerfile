@@ -15,9 +15,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     poppler-utils \
     antiword \
     lynx \
-    libxml2-dev libxslt1-dev libexpat1-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    libexpat1-dev \
     libcompress-raw-zlib-perl \
     default-mysql-client \
+    default-libmysqlclient-dev \
+    pkg-config \
     cpanminus \
     && rm -rf /var/lib/apt/lists/*
 

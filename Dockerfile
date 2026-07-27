@@ -26,17 +26,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN cpanm --notest \
-    DBI \
-    DBD::mysql \
-    XML::LibXML \
-    XML::LibXSLT \
     Data::UUID \
-    JSON \
-    Unicode::String \
-    Text::Unidecode \
-    Digest::MD5
+    XML::LibXSLT \
+    XML::Generator \
+    XML::DOM \
+    XML::SAX \
+    XML::NamespaceSupport \
+    Archive::Zip \
+    CGI \
+    CGI::Cookie \
+    CGI::Carp \
+    File::Slurp \
+    File::Copy::Recursive \
+    Net::SMTP \
+    Email::Valid \
+    Crypt::SSLeay
 
-RUN git clone --branch 3.4 --depth 1 https://github.com/eprints/eprints.git ${EPRINTS_ROOT}
+RUN git clone https://github.com/eprints/eprints3.4.git ${EPRINTS_ROOT}
 
 WORKDIR ${EPRINTS_ROOT}
 

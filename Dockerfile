@@ -12,10 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     liblwp-protocol-https-perl libtext-unidecode-perl lynx wget ghostscript poppler-utils antiword elinks \
     texlive-base texlive-binaries psutils imagemagick adduser tar gzip unzip libsearch-xapian-perl \
     libtex-encode-perl libio-string-perl python3-html2text make libexpat1-dev libxslt1-dev \
-    cpanminus gcc git libssl-dev zlib1g-dev \
+    cpanminus build-essential pkg-config git libssl-dev zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN cpanm --notest \
+RUN cpanm --verbose --notest \
     Data::UUID \
     XML::LibXSLT \
     XML::Generator \

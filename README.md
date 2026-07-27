@@ -75,8 +75,9 @@ di `.env`).
   memastikan urutan pertanyaannya:
   ```bash
   docker compose run --rm eprints bash
+  su -s /bin/bash eprints
   cd /opt/eprints3
-  perl bin/epadmin create repo
+  perl bin/epadmin create pub
   ```
   lalu sesuaikan daftar `printf` di `entrypoint.sh`.
 - Data archive (dokumen, konfigurasi, index) disimpan langsung di

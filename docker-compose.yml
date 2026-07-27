@@ -18,13 +18,5 @@ services:
     volumes:
       - /var/eprints:/opt/eprints3/archives
     restart: unless-stopped
-    networks:
-      - eprints-network
-
-networks:
-  eprints-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.200.0.0/16
-          gateway: 172.200.0.1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

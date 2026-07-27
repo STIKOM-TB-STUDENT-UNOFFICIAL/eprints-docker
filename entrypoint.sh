@@ -52,6 +52,13 @@ if [ ! -d "$EPRINTS_ROOT/archives/$ARCHIVE_ID" ]; then
 
   su -s /bin/bash eprints -c "cd '$EPRINTS_ROOT' && perl bin/generate_apacheconf" || true
   su -s /bin/bash eprints -c "cd '$EPRINTS_ROOT' && perl bin/epadmin enable '$ARCHIVE_ID'" || true
+
+  a2dissite 000-default.conf >/dev/null 2>&1 || true
+  
+  if [ -f /etc/apache2/sites-available/eprints.conf ]; then
+    a2ensite eprints.conf >/dev/null 2>&1 || true
+  fi
+
   chown -R eprints:eprints "$EPRINTS_ROOT/archives/$ARCHIVE_ID"
 else
   echo "[entrypoint] Archive '$ARCHIVE_ID' sudah ada, lewati pembuatan ulang."

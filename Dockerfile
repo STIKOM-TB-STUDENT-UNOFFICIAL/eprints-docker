@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PERL5LIB=/opt/eprints3/perl_lib \
     PATH="/opt/eprints3/bin:${PATH}"
 
-RUN apt install perl libncurses6 libselinux1 apache2 libapache2-mod-perl2 libxml-libxml-perl \
+RUN apt-get install perl libncurses6 libselinux1 apache2 libapache2-mod-perl2 libxml-libxml-perl \
   libunicode-string-perl libterm-readkey-perl libmime-lite-perl libmime-types-perl libdigest-sha-perl \
   libdbd-mysql-perl libxml-parser-perl libxml2-dev libxml-twig-perl libarchive-any-perl libjson-perl \
   liblwp-protocol-https-perl libtext-unidecode-perl lynx wget ghostscript poppler-utils antiword elinks \

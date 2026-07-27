@@ -38,12 +38,20 @@ if [ ! -d "$EPRINTS_ROOT/archives/$ARCHIVE_ID" ]; then
   echo "[entrypoint] Membuat archive '$ARCHIVE_ID' dengan DB eksternal..."
 
   CLEAN_HOSTNAME=$(echo "$EPRINTS_HOSTNAME" | sed -e 's|^https*://||' -e 's|:[0-9]*$||' -e 's|/.*$||')
+  if [[ "$CLEAN_HOSTNAME" != *.* ]]; then
+    CLEAN_HOSTNAME="${CLEAN_HOSTNAME}.example.com"
+  fi
+
+  echo "[entrypoint] Hostname yang digunakan: '$CLEAN_HOSTNAME'"
+  echo "[entrypoint] Memeriksa definisi prompt EPrints..."
+  grep -rn -C 3 "Not a hostname" "$EPRINTS_ROOT/perl_lib/" || true
+  find "$EPRINTS_ROOT/perl_lib" -name "*Create*.pm" -exec cat {} + 2>/dev/null | grep -E "prompt|get_" | head -n 30 || true
 
   su -s /bin/bash eprints -c "
     cd '$EPRINTS_ROOT' && \
     printf '%s\n' \
-      '$ARCHIVE_ID' \
       '$CLEAN_HOSTNAME' \
+      '$ARCHIVE_ID' \
       '$EPRINTS_ADMIN_EMAIL' \
       '$DB_HOST' \
       '$DB_PORT' \

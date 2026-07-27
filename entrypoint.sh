@@ -37,11 +37,13 @@ echo "[entrypoint] Database eksternal terhubung."
 if [ ! -d "$EPRINTS_ROOT/archives/$ARCHIVE_ID" ]; then
   echo "[entrypoint] Membuat archive '$ARCHIVE_ID' dengan DB eksternal..."
 
+  CLEAN_HOSTNAME=$(echo "$EPRINTS_HOSTNAME" | sed -e 's|^https*://||' -e 's|:[0-9]*$||' -e 's|/.*$||')
+
   su -s /bin/bash eprints -c "
     cd '$EPRINTS_ROOT' && \
     printf '%s\n' \
-      '$EPRINTS_HOSTNAME' \
       '$ARCHIVE_ID' \
+      '$CLEAN_HOSTNAME' \
       '$EPRINTS_ADMIN_EMAIL' \
       '$DB_HOST' \
       '$DB_PORT' \

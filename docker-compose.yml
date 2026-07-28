@@ -17,7 +17,7 @@ services:
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
     volumes:
-      - /var/eprints:/opt/eprints3/archives
+      - /var/eprints:/opt/eprints3
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"

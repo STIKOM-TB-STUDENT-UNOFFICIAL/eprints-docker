@@ -19,4 +19,6 @@ services:
       DB_PASS: ${DB_PASS}
     volumes:
       - /var/eprints:/opt/eprints3/archives
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped

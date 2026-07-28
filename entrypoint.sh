@@ -41,13 +41,15 @@ if [ ! -d "$EPRINTS_ROOT/archives/$ARCHIVE_ID" ]; then
   if [[ "$CLEAN_HOSTNAME" != *.* ]]; then
     CLEAN_HOSTNAME="${CLEAN_HOSTNAME}.example.com"
   fi
-
   echo "[entrypoint] Hostname yang digunakan: '$CLEAN_HOSTNAME'"
 
-  export EPRINTS_ROOT ARCHIVE_ID REP_TYPE CLEAN_HOSTNAME
-  export DB_NAME DB_HOST DB_PORT DB_USER DB_PASS EPRINTS_ADMIN_EMAIL
+  echo "[entrypoint] Memastikan database '$DB_NAME' tersedia..."
+  mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" \
+    -e "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" \
+    || echo "[entrypoint] Peringatan: gagal membuat database otomatis, pastikan '$DB_NAME' sudah ada dan '$DB_USER' punya akses penuh ke dalamnya."
 
-  su -s /bin/bash eprints <<'EOSU'
+  TMP_SCRIPT=$(mktemp /tmp/eprints_create.XXXXXX.sh)
+  cat > "$TMP_SCRIPT" <<EOF
 set -e
 cd "$EPRINTS_ROOT"
 
@@ -81,7 +83,12 @@ echo "[entrypoint] Mengimpor subjek standar..."
 perl bin/import_subjects --verbose --force "$ARCHIVE_ID" || true
 echo "[entrypoint] Membuat halaman statis..."
 perl bin/generate_static --verbose "$ARCHIVE_ID" || true
-EOSU
+EOF
+
+  chown eprints:eprints "$TMP_SCRIPT"
+  chmod 700 "$TMP_SCRIPT"
+  su -s /bin/bash eprints -c "bash '$TMP_SCRIPT'"
+  rm -f "$TMP_SCRIPT"
 
   su -s /bin/bash eprints -c "cd '$EPRINTS_ROOT' && perl bin/generate_apacheconf" || true
 

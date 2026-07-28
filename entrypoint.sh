@@ -43,49 +43,50 @@ if [ ! -d "$EPRINTS_ROOT/archives/$ARCHIVE_ID" ]; then
   fi
 
   echo "[entrypoint] Hostname yang digunakan: '$CLEAN_HOSTNAME'"
-  echo "[entrypoint] Memeriksa definisi prompt EPrints..."
-  grep -rn -C 3 "Not a hostname" "$EPRINTS_ROOT/perl_lib/" || true
-  find "$EPRINTS_ROOT/perl_lib" -name "*Create*.pm" -exec cat {} + 2>/dev/null | grep -E "prompt|get_" | head -n 30 || true
 
-  su -s /bin/bash eprints -c "
-    cd '$EPRINTS_ROOT' && \
-    printf '%s\n' \
-      '$ARCHIVE_ID' \
-      'yes' \
-      '$CLEAN_HOSTNAME' \
-      '80' \
-      '#' \
-      '/' \
-      '' \
-      '$EPRINTS_ADMIN_EMAIL' \
-      '$CLEAN_HOSTNAME' \
-      '$CLEAN_HOSTNAME' \
-      'yes' \
-      'yes' \
-      '$DB_NAME' \
-      '$DB_HOST' \
-      '$DB_PORT' \
-      '#' \
-      '$DB_USER' \
-      '$DB_PASS' \
-      'InnoDB' \
-      'yes' \
-      'no' \
-    | perl bin/epadmin create '$REP_TYPE' || true
+  export EPRINTS_ROOT ARCHIVE_ID REP_TYPE CLEAN_HOSTNAME
+  export DB_NAME DB_HOST DB_PORT DB_USER DB_PASS EPRINTS_ADMIN_EMAIL
 
-    echo '[entrypoint] Melanjutkan pembuatan tabel database...'
-    perl bin/epadmin create_tables '$ARCHIVE_ID'
-    echo '[entrypoint] Mengimpor subjek standar...'
-    perl bin/import_subjects --verbose --force '$ARCHIVE_ID' || true
-    echo '[entrypoint] Membuat halaman statis...'
-    perl bin/generate_static --verbose '$ARCHIVE_ID' || true
-  "
+  su -s /bin/bash eprints <<'EOSU'
+set -e
+cd "$EPRINTS_ROOT"
+
+printf '%s\n' \
+  "$ARCHIVE_ID" \
+  "yes" \
+  "$CLEAN_HOSTNAME" \
+  "80" \
+  "#" \
+  "/" \
+  "" \
+  "$EPRINTS_ADMIN_EMAIL" \
+  "$CLEAN_HOSTNAME" \
+  "$CLEAN_HOSTNAME" \
+  "yes" \
+  "yes" \
+  "$DB_NAME" \
+  "$DB_HOST" \
+  "$DB_PORT" \
+  "#" \
+  "$DB_USER" \
+  "$DB_PASS" \
+  "InnoDB" \
+  "yes" \
+  "no" \
+| perl bin/epadmin create "$REP_TYPE" || true
+
+echo "[entrypoint] Melanjutkan pembuatan tabel database..."
+perl bin/epadmin create_tables "$ARCHIVE_ID"
+echo "[entrypoint] Mengimpor subjek standar..."
+perl bin/import_subjects --verbose --force "$ARCHIVE_ID" || true
+echo "[entrypoint] Membuat halaman statis..."
+perl bin/generate_static --verbose "$ARCHIVE_ID" || true
+EOSU
 
   su -s /bin/bash eprints -c "cd '$EPRINTS_ROOT' && perl bin/generate_apacheconf" || true
-  su -s /bin/bash eprints -c "cd '$EPRINTS_ROOT' && perl bin/epadmin enable '$ARCHIVE_ID'" || true
 
   a2dissite 000-default.conf >/dev/null 2>&1 || true
-  
+
   if [ -f /etc/apache2/sites-available/eprints.conf ]; then
     a2ensite eprints.conf >/dev/null 2>&1 || true
   fi

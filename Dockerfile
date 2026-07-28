@@ -36,6 +36,7 @@ RUN cpanm --verbose --notest \
     Email::Valid \
     Crypt::SSLeay
 
+ARG CACHE_BUST=1
 RUN git clone https://github.com/STIKOM-TB-STUDENT-UNOFFICIAL/eprints-elysia.git ${EPRINTS_ROOT}
 
 WORKDIR ${EPRINTS_ROOT}

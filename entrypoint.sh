@@ -6,6 +6,7 @@ ARCHIVE_ID=${EPRINTS_ARCHIVE_ID:-repo}
 REP_TYPE=${EPRINTS_REP_TYPE:-pub}
 EPRINTS_UID=${EPRINTS_UID:-1000}
 EPRINTS_GID=${EPRINTS_GID:-1000}
+EPADMIN="$EPRINTS_ROOT/bin/epadmin"
 
 : "${DB_HOST:?DB_HOST wajib diisi (host database eksternal)}"
 : "${DB_PORT:=3306}"
@@ -34,71 +35,69 @@ until mysqladmin ping -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" --sile
 done
 echo "[entrypoint] Database eksternal terhubung."
 
-if [ ! -d "$EPRINTS_ROOT/archives/$ARCHIVE_ID" ]; then
-  echo "[entrypoint] Membuat archive '$ARCHIVE_ID' dengan DB eksternal..."
+ARCHIVE_DIR="$EPRINTS_ROOT/archives/$ARCHIVE_ID"
 
-  CLEAN_HOSTNAME=$(echo "$EPRINTS_HOSTNAME" | sed -e 's|^https*://||' -e 's|:[0-9]*$||' -e 's|/.*$||')
-  if [[ "$CLEAN_HOSTNAME" != *.* ]]; then
-    CLEAN_HOSTNAME="${CLEAN_HOSTNAME}.example.com"
+if [ ! -d "$ARCHIVE_DIR" ]; then
+  echo "[entrypoint] Membuat scaffold archive '$ARCHIVE_ID' (tipe: $REP_TYPE) ..."
+
+  su -s /bin/bash eprints -c "
+    printf '%s\n' '$ARCHIVE_ID' 'no' 'no' | perl '$EPADMIN' create '$REP_TYPE'
+  "
+
+  if [ ! -d "$ARCHIVE_DIR" ]; then
+    echo '[entrypoint] GAGAL: scaffold archive tidak terbentuk. Cek log epadmin create di atas.'
+    exit 1
   fi
-  echo "[entrypoint] Hostname yang digunakan: '$CLEAN_HOSTNAME'"
 
-  echo "[entrypoint] Memastikan database '$DB_NAME' tersedia..."
-  mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" \
-    -e "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" \
-    || echo "[entrypoint] Peringatan: gagal membuat database otomatis, pastikan '$DB_NAME' sudah ada dan '$DB_USER' punya akses penuh ke dalamnya."
-
-  TMP_SCRIPT=$(mktemp /tmp/eprints_create.XXXXXX.sh)
-  cat > "$TMP_SCRIPT" <<EOF
-set -e
-cd "$EPRINTS_ROOT"
-
-printf '%s\n' \
-  "$ARCHIVE_ID" \
-  "yes" \
-  "$CLEAN_HOSTNAME" \
-  "80" \
-  "#" \
-  "/" \
-  "" \
-  "$EPRINTS_ADMIN_EMAIL" \
-  "$CLEAN_HOSTNAME" \
-  "$CLEAN_HOSTNAME" \
-  "yes" \
-  "yes" \
-  "$DB_NAME" \
-  "$DB_HOST" \
-  "$DB_PORT" \
-  "#" \
-  "$DB_USER" \
-  "$DB_PASS" \
-  "InnoDB" \
-  "yes" \
-  "no" \
-| perl bin/epadmin create "$REP_TYPE" || true
-
-echo "[entrypoint] Melanjutkan pembuatan tabel database..."
-perl bin/epadmin create_tables "$ARCHIVE_ID"
-echo "[entrypoint] Mengimpor subjek standar..."
-perl bin/import_subjects --verbose --force "$ARCHIVE_ID" || true
-echo "[entrypoint] Membuat halaman statis..."
-perl bin/generate_static --verbose "$ARCHIVE_ID" || true
+  echo "[entrypoint] Menulis cfg/cfg.d/10_core.pl (hostname, port) ..."
+  cat > "$ARCHIVE_DIR/cfg/cfg.d/10_core.pl" <<EOF
+\$c->{host} = "$EPRINTS_HOSTNAME";
+\$c->{port} = 80;
+\$c->{aliases} = [];
+\$c->{securehost} = undef;
+\$c->{secureport} = 443;
+\$c->{http_root} = undef;
 EOF
 
-  chown eprints:eprints "$TMP_SCRIPT"
-  chmod 700 "$TMP_SCRIPT"
-  su -s /bin/bash eprints -c "bash '$TMP_SCRIPT'"
-  rm -f "$TMP_SCRIPT"
+  echo "[entrypoint] Menulis cfg/cfg.d/adminemail.pl ..."
+  cat > "$ARCHIVE_DIR/cfg/cfg.d/adminemail.pl" <<EOF
+\$c->{adminemail} = '$EPRINTS_ADMIN_EMAIL';
+EOF
 
-  su -s /bin/bash eprints -c "cd '$EPRINTS_ROOT' && perl bin/generate_apacheconf" || true
+  echo "[entrypoint] Menulis cfg/cfg.d/database.pl (koneksi ke DB eksternal) ..."
+  cat > "$ARCHIVE_DIR/cfg/cfg.d/database.pl" <<EOF
+\$c->{dbdriver} = "mysql";
+\$c->{dbhost} = "$DB_HOST";
+\$c->{dbport} = $DB_PORT;
+\$c->{dbsock} = undef;
+\$c->{dbname} = "$DB_NAME";
+\$c->{dbuser} = "$DB_USER";
+\$c->{dbpass} = "$DB_PASS";
+\$c->{dbengine} = "InnoDB";
+EOF
 
-  a2dissite 000-default.conf >/dev/null 2>&1 || true
+  chown -R eprints:eprints "$ARCHIVE_DIR"
 
-  if [ -f /etc/apache2/sites-available/eprints.conf ]; then
-    a2ensite eprints.conf >/dev/null 2>&1 || true
-  fi
+  echo "[entrypoint] Membuat tabel database ..."
+  su -s /bin/bash eprints -c "perl '$EPADMIN' create_tables '$ARCHIVE_ID'"
 
-  chown -R eprints:eprints "$EPRINTS_ROOT/archives/$ARCHIVE_ID"
+  echo "[entrypoint] Mengimpor subjek standar ..."
+  su -s /bin/bash eprints -c "perl '$EPRINTS_ROOT/bin/import_subjects' --verbose --force '$ARCHIVE_ID'" || true
+
+  echo "[entrypoint] Membuat halaman statis ..."
+  su -s /bin/bash eprints -c "perl '$EPRINTS_ROOT/bin/generate_static' --verbose '$ARCHIVE_ID'" || true
+
+  echo "[entrypoint] Generate konfigurasi Apache ..."
+  su -s /bin/bash eprints -c "perl '$EPRINTS_ROOT/bin/generate_apacheconf' --verbose" || true
+
+  chown -R eprints:eprints "$ARCHIVE_DIR"
+
+  echo "------------------------------------------------------------------"
+  echo "[entrypoint] Archive '$ARCHIVE_ID' selesai dibuat."
+  echo "[entrypoint] PENTING: belum ada user admin. Buat sekarang dengan:"
+  echo "  docker compose exec eprints su -s /bin/bash eprints -c \\"
+  echo "    \"perl $EPADMIN create_user $ARCHIVE_ID\""
+  echo "------------------------------------------------------------------"
 else
   echo "[entrypoint] Archive '$ARCHIVE_ID' sudah ada, lewati pembuatan ulang."
 fi

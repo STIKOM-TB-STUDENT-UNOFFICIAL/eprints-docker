@@ -102,4 +102,10 @@ else
   echo "[entrypoint] Archive '$ARCHIVE_ID' sudah ada, lewati pembuatan ulang."
 fi
 
+if ! grep -qF "Include $EPRINTS_ROOT/cfg/apache.conf" /etc/apache2/apache2.conf; then
+  echo "[entrypoint] Menambahkan Include $EPRINTS_ROOT/cfg/apache.conf ke apache2.conf ..."
+  echo "Include $EPRINTS_ROOT/cfg/apache.conf" >> /etc/apache2/apache2.conf
+fi
+a2dissite 000-default.conf >/dev/null 2>&1 || true
+ 
 exec "$@"

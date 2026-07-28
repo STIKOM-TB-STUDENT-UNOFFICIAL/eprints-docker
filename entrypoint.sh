@@ -6,6 +6,8 @@ ARCHIVE_ID=${EPRINTS_ARCHIVE_ID:-repo}
 REP_TYPE=${EPRINTS_REP_TYPE:-pub}
 EPRINTS_UID=${EPRINTS_UID:-1000}
 EPRINTS_GID=${EPRINTS_GID:-1000}
+EPRINTS_ARCHIVE_NAME=${EPRINTS_ARCHIVE_NAME:-Repository}
+EPRINTS_ORG_NAME=${EPRINTS_ORG_NAME:-Organisation}
 EPADMIN="$EPRINTS_ROOT/bin/epadmin"
 
 : "${DB_HOST:?DB_HOST wajib diisi (host database eksternal)}"
@@ -76,6 +78,18 @@ EOF
 \$c->{dbengine} = "InnoDB";
 EOF
 
+  echo "[entrypoint] Menulis phrase archive_name & organisation_name ..."
+  mkdir -p "$ARCHIVE_DIR/cfg/lang/en/phrases"
+  cat > "$ARCHIVE_DIR/cfg/lang/en/phrases/archive_name.xml" <<EOF
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<!DOCTYPE phrases SYSTEM "entities.dtd">
+<epp:phrases xmlns="http://www.w3.org/1999/xhtml"
+xmlns:epp="http://eprints.org/ep3/phrase">
+<epp:phrase id="archive_name">$EPRINTS_ARCHIVE_NAME</epp:phrase>
+<epp:phrase id="organisation_name">$EPRINTS_ORG_NAME</epp:phrase>
+</epp:phrases>
+EOF
+
   chown -R eprints:eprints "$ARCHIVE_DIR"
 
   echo "[entrypoint] Membuat tabel database ..."
@@ -102,10 +116,11 @@ else
   echo "[entrypoint] Archive '$ARCHIVE_ID' sudah ada, lewati pembuatan ulang."
 fi
 
+
 if ! grep -qF "Include $EPRINTS_ROOT/cfg/apache.conf" /etc/apache2/apache2.conf; then
   echo "[entrypoint] Menambahkan Include $EPRINTS_ROOT/cfg/apache.conf ke apache2.conf ..."
   echo "Include $EPRINTS_ROOT/cfg/apache.conf" >> /etc/apache2/apache2.conf
 fi
 a2dissite 000-default.conf >/dev/null 2>&1 || true
- 
+
 exec "$@"

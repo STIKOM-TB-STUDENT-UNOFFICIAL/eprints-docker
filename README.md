@@ -103,3 +103,8 @@ di `.env`).
 
 Data archive EPrints (via bind mount) akan berada di `/var/eprints` pada
 host, bukan di dalam Docker volume.
+
+## Membuat user admin baru
+```
+docker compose exec eprints su -s /bin/bash eprints -c "perl /opt/eprints3/bin/epadmin create_user repo"
+```
